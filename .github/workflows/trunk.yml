@@ -1,0 +1,49 @@
+name: trunk
+
+on:
+  push:
+    branches: [ "feature-*" ]
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/github-script@v6
+        id: infer
+        with:
+          script: |
+            const childProcess = require("child_process");
+            
+            const branchName = '${{ github.ref_name }}';
+            if (!branchName.startsWith('feature') && branchName !== 'main') {
+              console.log("❗ The branch doesn't satisfy our naming requirements ❗");
+              process.exit(1);
+            }
+            const branchType = branchName.split('-')[0];
+            
+            const comparedBranches = branchType === 'main' ? '${{ env.GITHUB_HEAD_REF }}...origin/main' : '${ branchName }...origin/main'
+            
+            const modifiedDirectories = await new Promise((resolve, reject) => {
+              childProcess.exec(`git --no-pager diff --name-only ${ comparedBranches }`, (err, stdout, stderr) => {
+                if (err) {
+                  console.error('Git command failed with output: ' + stderr);
+                  reject(err);
+                }
+                const modifiedFiles = stdout.trim().split('\n');
+                const modifiedDirectories = new Set(
+                  modifiedFiles.map(path => path.split('/')[0])
+                );
+                resolve(modifiedDirectories);
+              });
+            });
+
+            core.setOutput('branchType', branchType);
+
+            console.table({ branchType });
+          
