@@ -14,6 +14,18 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - run: |
+          echo 'HEAD HEAD^'
+          git --no-pager diff --name-only HEAD HEAD^
+          echo 'HEAD origin/main'
+          git --no-pager diff --name-only HEAD origin/main
+          echo 'ref_name...origin/main'
+          git --no-pager diff --name-only ${{ github.ref_name }}...origin/main
+          echo 'ref_name origin/main'
+          git --no-pager diff --name-only ${{ github.ref_name }} origin/main
+          echo 'ref_name head_ref'
+          git --no-pager diff --name-only ${{ github.ref_name }} ${{ github.head_ref }}
+
       - uses: actions/github-script@v6
         id: infer
         with:
@@ -38,7 +50,6 @@ jobs:
               });
             });
             
-            console.log(newestCommonAncestor)
             const modifiedDirectories = await new Promise((resolve, reject) => {
               childProcess.exec(`git --no-pager diff --name-only ${ newestCommonAncestor } HEAD`, (err, stdout, stderr) => {
                 if (err) {
