@@ -2,10 +2,7 @@ name: trunk
 
 on:
   push:
-    branches: [ "feature-*" ]
-  pull_request:
-    types:
-      - closed
+    branches: [main, feature-*]
 
 jobs:
   build:
@@ -14,6 +11,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - run: |
+          git rev-parse --short HEAD
+          git rev-parse --short HEAD^
       - uses: actions/github-script@v6
         id: infer
         with:
@@ -27,20 +27,8 @@ jobs:
             }
             const branchType = branchName.split('-')[0];
             
-            const newestCommonAncestor = await new Promise((resolve, reject) => {
-              childProcess.exec(`git merge-base origin/main ${ branchName }`, (err, stdout, stderr) => {
-                if (err) {
-                  console.error('Git command failed with output: ' + stderr);
-                  reject(err);
-                }
-                const newestCommonAncestor = stdout.trim();
-                resolve(newestCommonAncestor);
-              });
-            });
-            
-            console.log(newestCommonAncestor)
             const modifiedDirectories = await new Promise((resolve, reject) => {
-              childProcess.exec(`git --no-pager diff --name-only ${ newestCommonAncestor } HEAD`, (err, stdout, stderr) => {
+              childProcess.exec('git --no-pager diff --name-only HEAD^ HEAD', (err, stdout, stderr) => {
                 if (err) {
                   console.error('Git command failed with output: ' + stderr);
                   reject(err);
@@ -58,4 +46,3 @@ jobs:
 
             console.log(modifiedDirectories);
             console.table({ branchType, modifiedDirectories });
-          
