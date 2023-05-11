@@ -37,6 +37,9 @@ jobs:
                 resolve(newestCommonAncestor);
               });
             });
+
+            console.log('${{ github.head_ref }}');
+            console.log('${{ github.ref_name }}');
             
             console.log(newestCommonAncestor)
             const modifiedDirectories = await new Promise((resolve, reject) => {
