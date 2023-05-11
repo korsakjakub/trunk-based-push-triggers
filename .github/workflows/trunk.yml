@@ -27,10 +27,20 @@ jobs:
             }
             const branchType = branchName.split('-')[0];
             
-            const comparedBranches = branchType === 'main' ? '${{ env.GITHUB_HEAD_REF }}...origin/main' : `${ branchName }...origin/main`
+            const newestCommonAncestor = await new Promise((resolve, reject) => {
+              childProcess.exec(`git merge-base origin/main ${ branchName }`, (err, stdout, stderr) => {
+                if (err) {
+                  console.error('Git command failed with output: ' + stderr);
+                  reject(err);
+                }
+                const newestCommonAncestor = stdout.trim();
+                resolve(newestCommonAncestor);
+              });
+            });
             
+            console.log(newestCommonAncestor)
             const modifiedDirectories = await new Promise((resolve, reject) => {
-              childProcess.exec(`git --no-pager diff --name-only ${ comparedBranches }`, (err, stdout, stderr) => {
+              childProcess.exec(`git --no-pager diff --name-only ${ newestCommonAncestor } HEAD`, (err, stdout, stderr) => {
                 if (err) {
                   console.error('Git command failed with output: ' + stderr);
                   reject(err);
@@ -44,6 +54,8 @@ jobs:
             });
 
             core.setOutput('branchType', branchType);
+            core.setOutput('modifiedDirectories', modifiedDirectories);
 
-            console.table({ branchType });
+            console.log(modifiedDirectories);
+            console.table({ branchType, modifiedDirectories });
           
