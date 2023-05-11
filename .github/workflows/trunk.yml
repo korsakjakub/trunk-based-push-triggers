@@ -27,7 +27,7 @@ jobs:
             }
             const branchType = branchName.split('-')[0];
             
-            const comparedBranches = branchType === 'main' ? '${{ env.GITHUB_HEAD_REF }}...origin/main' : '${ branchName }...origin/main'
+            const comparedBranches = branchType === 'main' ? '${{ env.GITHUB_HEAD_REF }}...origin/main' : `${ branchName }...origin/main`
             
             const modifiedDirectories = await new Promise((resolve, reject) => {
               childProcess.exec(`git --no-pager diff --name-only ${ comparedBranches }`, (err, stdout, stderr) => {
